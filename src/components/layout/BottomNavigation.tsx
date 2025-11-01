@@ -1,10 +1,11 @@
-import { Home, ClipboardCheck, FileText, Settings } from 'lucide-react';
+import { Home, ClipboardCheck, FileText, Settings, History } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
-  { icon: ClipboardCheck, label: 'Attendance', path: '/floors' },
+  { icon: ClipboardCheck, label: 'Mark', path: '/floors' },
+  { icon: History, label: 'History', path: '/history' },
   { icon: FileText, label: 'Reports', path: '/reports' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];

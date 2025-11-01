@@ -3,12 +3,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Floors from "./pages/Floors";
 import RoomLayout from "./pages/RoomLayout";
 import AttendanceMarking from "./pages/AttendanceMarking";
+import AttendanceHistory from "./pages/AttendanceHistory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,12 +23,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/floors" element={<Floors />} />
-          <Route path="/floor/:floorNumber" element={<RoomLayout />} />
-          <Route path="/attendance/:floorNumber/:roomNumber" element={<AttendanceMarking />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/floors" element={<ProtectedRoute><Floors /></ProtectedRoute>} />
+          <Route path="/floor/:floorNumber" element={<ProtectedRoute><RoomLayout /></ProtectedRoute>} />
+          <Route path="/attendance/:floorNumber/:roomNumber" element={<ProtectedRoute><AttendanceMarking /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><AttendanceHistory /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

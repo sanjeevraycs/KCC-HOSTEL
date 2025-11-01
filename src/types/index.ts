@@ -26,6 +26,8 @@ export interface AttendanceRecord {
   markedAt: string;
   markedBy: string;
   notes?: string;
+  roomNumber?: string;
+  floorNumber?: number;
 }
 
 export interface Floor {

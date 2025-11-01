@@ -14,16 +14,225 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attendance_records: {
+        Row: {
+          date: string
+          floor_number: number | null
+          id: string
+          marked_at: string
+          marked_by: string
+          notes: string | null
+          room_number: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          date?: string
+          floor_number?: number | null
+          id?: string
+          marked_at?: string
+          marked_by: string
+          notes?: string | null
+          room_number?: string | null
+          status: string
+          student_id: string
+        }
+        Update: {
+          date?: string
+          floor_number?: number | null
+          id?: string
+          marked_at?: string
+          marked_by?: string
+          notes?: string | null
+          room_number?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floors: {
+        Row: {
+          created_at: string
+          floor_number: number
+          id: string
+          total_rooms: number
+        }
+        Insert: {
+          created_at?: string
+          floor_number: number
+          id?: string
+          total_rooms?: number
+        }
+        Update: {
+          created_at?: string
+          floor_number?: number
+          id?: string
+          total_rooms?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          bed_type: string
+          capacity: number
+          created_at: string
+          floor_id: string
+          floor_number: number
+          id: string
+          room_number: string
+        }
+        Insert: {
+          bed_type: string
+          capacity: number
+          created_at?: string
+          floor_id: string
+          floor_number: number
+          id?: string
+          room_number: string
+        }
+        Update: {
+          bed_type?: string
+          capacity?: number
+          created_at?: string
+          floor_id?: string
+          floor_number?: number
+          id?: string
+          room_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_floor_id_fkey"
+            columns: ["floor_id"]
+            isOneToOne: false
+            referencedRelation: "floors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          bed_number: number | null
+          created_at: string
+          email: string | null
+          floor_number: number | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          roll_number: string
+          room_id: string | null
+          room_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          bed_number?: number | null
+          created_at?: string
+          email?: string | null
+          floor_number?: number | null
+          id?: string
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          roll_number: string
+          room_id?: string | null
+          room_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bed_number?: number | null
+          created_at?: string
+          email?: string | null
+          floor_number?: number | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          roll_number?: string
+          room_id?: string | null
+          room_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "warden" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +359,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["warden", "admin"],
+    },
   },
 } as const
