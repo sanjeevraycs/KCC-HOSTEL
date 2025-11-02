@@ -1,61 +1,68 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { mockFloors } from '@/data/mockData';
-import { Building2, Users } from 'lucide-react';
-import { ProgressIndicator } from '@/components/ui/progress-indicator';
+import { Building2, ChevronRight } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useFloors } from '@/hooks/useRooms';
 
 export default function Floors() {
   const navigate = useNavigate();
+  const { data: floors = [], isLoading } = useFloors();
+
+  if (isLoading) {
+    return (
+      <MainLayout title="Select Floor">
+        <div className="container flex items-center justify-center px-4 py-20">
+          <LoadingSpinner />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
-    <MainLayout title="Floor Selection">
+    <MainLayout title="Select Floor">
       <div className="container space-y-6 px-4 py-6">
+        {/* Header */}
         <div>
-          <h2 className="text-xl font-bold">Select a Floor</h2>
-          <p className="text-sm text-muted-foreground">Choose a floor to mark attendance</p>
+          <h2 className="text-2xl font-bold">Select Floor</h2>
+          <p className="text-muted-foreground">Choose a floor to view rooms</p>
         </div>
 
-        <div className="space-y-4">
-          {mockFloors.map((floor) => {
-            const completionPercentage = (floor.completedRooms / floor.totalRooms) * 100;
-
-            return (
-              <Card
-                key={floor.floorNumber}
-                className="cursor-pointer p-4 transition-smooth hover:border-primary"
-                onClick={() => navigate(`/floor/${floor.floorNumber}`)}
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-primary/10 p-3">
-                        <Building2 className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">Floor {floor.floorNumber}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {floor.totalRooms} rooms
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>{floor.totalStudents}</span>
-                    </div>
+        {/* Floor Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {floors.map((floor) => (
+            <Card
+              key={floor.id}
+              className="cursor-pointer p-4 transition-smooth hover:border-primary hover:shadow-md"
+              onClick={() => navigate(`/floor/${floor.floor_number}`)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full bg-primary/10 p-2">
+                    <Building2 className="h-5 w-5 text-primary" />
                   </div>
-
-                  <ProgressIndicator
-                    value={floor.completedRooms}
-                    max={floor.totalRooms}
-                    label="Completion"
-                    showPercentage
-                  />
+                  <div>
+                    <p className="font-semibold">Floor {floor.floor_number}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {floor.total_rooms} rooms
+                    </p>
+                  </div>
                 </div>
-              </Card>
-            );
-          })}
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </Card>
+          ))}
         </div>
+
+        {/* Back Button */}
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => navigate('/')}
+        >
+          Back to Dashboard
+        </Button>
       </div>
     </MainLayout>
   );

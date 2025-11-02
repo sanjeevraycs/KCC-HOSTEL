@@ -2,16 +2,17 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useParams } from 'react-router-dom';
-import { mockRooms } from '@/data/mockData';
 import { Home, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useRooms } from '@/hooks/useRooms';
 
 export default function RoomLayout() {
   const navigate = useNavigate();
   const { floorNumber } = useParams<{ floorNumber: string }>();
   const floor = parseInt(floorNumber || '1');
 
-  const floorRooms = mockRooms.filter((room) => room.floorNumber === floor);
+  const { data: rooms = [], isLoading } = useRooms(floor);
 
   const navigateFloor = (direction: 'prev' | 'next') => {
     const newFloor = direction === 'prev' ? floor - 1 : floor + 1;
@@ -19,6 +20,16 @@ export default function RoomLayout() {
       navigate(`/floor/${newFloor}`);
     }
   };
+
+  if (isLoading) {
+    return (
+      <MainLayout title="Loading...">
+        <div className="container flex items-center justify-center px-4 py-20">
+          <LoadingSpinner />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout title={`Floor ${floor}`}>
@@ -35,7 +46,7 @@ export default function RoomLayout() {
           </Button>
           <div className="text-center">
             <h2 className="text-xl font-bold">Floor {floor}</h2>
-            <p className="text-sm text-muted-foreground">{floorRooms.length} rooms</p>
+            <p className="text-sm text-muted-foreground">{rooms.length} rooms</p>
           </div>
           <Button
             variant="outline"
@@ -49,9 +60,9 @@ export default function RoomLayout() {
 
         {/* Room Grid */}
         <div className="grid grid-cols-2 gap-4">
-          {floorRooms.map((room) => (
+          {rooms.map((room) => (
             <Card
-              key={room.roomNumber}
+              key={room.id}
               className="cursor-pointer p-4 transition-smooth hover:border-primary"
               onClick={() => navigate(`/attendance/${floor}/${room.roomNumber}`)}
             >
@@ -70,11 +81,11 @@ export default function RoomLayout() {
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Users className="h-4 w-4" />
                     <span>
-                      {room.students.length}/{room.capacity}
+                      {room.studentCount || 0}/{room.capacity}
                     </span>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {room.students.length} students
+                    {room.studentCount || 0} students
                   </span>
                 </div>
               </div>
