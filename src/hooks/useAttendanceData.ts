@@ -78,12 +78,42 @@ export function useSubmitAttendance() {
       if (error) throw error;
       return data;
     },
+    onMutate: async (variables) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['today-attendance'] });
+      
+      const previousData = queryClient.getQueryData(['today-attendance']);
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(['today-attendance'], (old: any) => {
+        const date = new Date().toISOString().split('T')[0];
+        const newRecords = variables.absentStudentIds.map((studentId) => ({
+          id: `temp-${studentId}`,
+          studentId,
+          date,
+          status: 'absent' as const,
+          markedAt: new Date().toISOString(),
+          markedBy: 'current-user',
+          notes: variables.notes,
+          roomNumber: variables.roomNumber,
+          floorNumber: variables.floorNumber,
+        }));
+        return [...(old || []), ...newRecords];
+      });
+
+      return { previousData };
+    },
+    onError: (error: Error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['today-attendance'], context.previousData);
+      }
+      toast.error(`Failed to submit attendance: ${error.message}`);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance-records'] });
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       toast.success('Attendance submitted successfully!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to submit attendance: ${error.message}`);
     },
   });
 }

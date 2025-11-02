@@ -4,80 +4,88 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useNavigate, useParams } from 'react-router-dom';
-import { mockRooms } from '@/data/mockData';
-import { useAttendance } from '@/hooks/useAttendance';
 import { User, Bed, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useStudents } from '@/hooks/useStudents';
+import { useSubmitAttendance } from '@/hooks/useAttendanceData';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function AttendanceMarking() {
   const navigate = useNavigate();
   const { floorNumber, roomNumber } = useParams<{ floorNumber: string; roomNumber: string }>();
   const floor = parseInt(floorNumber || '1');
-  const { absentStudents, toggleStudentAttendance, submitAttendance, resetCurrentAttendance } =
-    useAttendance();
   const [notes, setNotes] = useState('');
+  const [absentStudents, setAbsentStudents] = useState<Set<string>>(new Set());
 
-  const room = mockRooms.find(
-    (r) => r.floorNumber === floor && r.roomNumber === roomNumber
-  );
+  const { data: students = [], isLoading } = useStudents(floor, roomNumber);
+  const submitAttendanceMutation = useSubmitAttendance();
 
-  if (!room) {
+  const toggleStudentAttendance = (studentId: string) => {
+    setAbsentStudents((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId);
+      } else {
+        newSet.add(studentId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      await submitAttendanceMutation.mutateAsync({
+        absentStudentIds: Array.from(absentStudents),
+        roomNumber: roomNumber || '',
+        floorNumber: floor,
+        notes: notes || undefined,
+      });
+
+      // Reset and navigate
+      setAbsentStudents(new Set());
+      setNotes('');
+      navigate(`/floor/${floor}`);
+    } catch (error) {
+      // Error is handled by the mutation
+      console.error('Failed to submit attendance:', error);
+    }
+  };
+
+  if (isLoading) {
     return (
-      <MainLayout title="Room Not Found">
-        <div className="container px-4 py-6">
-          <p>Room not found</p>
+      <MainLayout title="Loading...">
+        <div className="container flex items-center justify-center px-4 py-20">
+          <LoadingSpinner />
         </div>
       </MainLayout>
     );
   }
 
-  const floorRooms = mockRooms.filter((r) => r.floorNumber === floor);
-  const currentRoomIndex = floorRooms.findIndex((r) => r.roomNumber === roomNumber);
-
-  const navigateRoom = (direction: 'prev' | 'next') => {
-    const newIndex = direction === 'prev' ? currentRoomIndex - 1 : currentRoomIndex + 1;
-    if (newIndex >= 0 && newIndex < floorRooms.length) {
-      const newRoom = floorRooms[newIndex];
-      resetCurrentAttendance();
-      navigate(`/attendance/${floor}/${newRoom.roomNumber}`);
-    }
-  };
-
-  const handleSubmit = () => {
-    submitAttendance(room.roomNumber, room.floorNumber);
-    toast.success('Attendance marked successfully!', {
-      description: `Room ${room.roomNumber} - ${absentStudents.size} absent, ${
-        room.students.length - absentStudents.size
-      } present`,
-    });
-    
-    // Navigate to next room or back to floor
-    if (currentRoomIndex < floorRooms.length - 1) {
-      navigateRoom('next');
-    } else {
-      navigate(`/floor/${floor}`);
-    }
-  };
+  if (!students.length) {
+    return (
+      <MainLayout title="Room Not Found">
+        <div className="container px-4 py-6">
+          <p>No students found for this room</p>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
-    <MainLayout title={`Room ${room.roomNumber}`}>
+    <MainLayout title={`Room ${roomNumber}`}>
       <div className="container space-y-6 px-4 py-6">
         {/* Room Info */}
         <Card className="p-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Room {room.roomNumber}</h2>
+              <h2 className="text-lg font-semibold">Room {roomNumber}</h2>
               <span className="text-sm text-muted-foreground">
-                Floor {room.floorNumber}
+                Floor {floor}
               </span>
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{room.bedType} room</span>
-              <span>•</span>
-              <span>{room.capacity} beds</span>
-              <span>•</span>
-              <span>{room.students.length} students</span>
+              <span>{students.length} students</span>
             </div>
           </div>
         </Card>
@@ -92,7 +100,7 @@ export default function AttendanceMarking() {
         {/* Student List */}
         <div className="space-y-3">
           <h3 className="font-semibold">Students</h3>
-          {room.students.map((student) => {
+          {students.map((student) => {
             const isAbsent = absentStudents.has(student.id);
 
             return (
@@ -144,31 +152,14 @@ export default function AttendanceMarking() {
           />
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={() => navigateRoom('prev')}
-            disabled={currentRoomIndex === 0}
-            className="flex-1"
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigateRoom('next')}
-            disabled={currentRoomIndex === floorRooms.length - 1}
-            className="flex-1"
-          >
-            Next
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-
         {/* Submit Button */}
-        <Button onClick={handleSubmit} className="w-full touch-target" size="lg">
-          Submit Attendance
+        <Button 
+          onClick={handleSubmit} 
+          className="w-full touch-target" 
+          size="lg"
+          disabled={submitAttendanceMutation.isPending}
+        >
+          {submitAttendanceMutation.isPending ? 'Submitting...' : 'Submit Attendance'}
         </Button>
 
         {/* Summary */}
@@ -177,7 +168,7 @@ export default function AttendanceMarking() {
             <span className="text-muted-foreground">Summary:</span>
             <div className="flex gap-4">
               <span className="text-accent">
-                Present: {room.students.length - absentStudents.size}
+                Present: {students.length - absentStudents.size}
               </span>
               <span className="text-warning">Absent: {absentStudents.size}</span>
             </div>

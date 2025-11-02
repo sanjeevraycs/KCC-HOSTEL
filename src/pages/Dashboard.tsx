@@ -2,19 +2,23 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { mockStudents } from '@/data/mockData';
-import { useAttendance } from '@/hooks/useAttendance';
 import { Users, UserCheck, UserX, ClipboardCheck } from 'lucide-react';
+import { useTodayAttendance } from '@/hooks/useAttendanceData';
+import { useAllStudents } from '@/hooks/useStudents';
+import { useRealtimeAttendance } from '@/hooks/useRealtimeAttendance';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { getTodayAttendance } = useAttendance();
-  const todayAttendance = getTodayAttendance();
+  const { data: todayAttendance = [] } = useTodayAttendance();
+  const { data: allStudents = [] } = useAllStudents();
+  
+  // Enable real-time updates
+  useRealtimeAttendance();
 
   const stats = {
-    totalStudents: mockStudents.length,
-    absentToday: todayAttendance.length,
-    presentToday: mockStudents.length - todayAttendance.length,
+    totalStudents: allStudents.length,
+    absentToday: todayAttendance.filter(a => a.status === 'absent').length,
+    presentToday: allStudents.length - todayAttendance.filter(a => a.status === 'absent').length,
   };
 
   const statCards = [
