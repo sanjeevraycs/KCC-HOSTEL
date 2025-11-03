@@ -60,37 +60,56 @@ export default function RoomLayout() {
 
         {/* Room Grid */}
         <div className="grid grid-cols-2 gap-4">
-          {rooms.map((room) => (
-            <Card
-              key={room.id}
-              className="cursor-pointer p-4 transition-smooth hover:border-primary"
-              onClick={() => navigate(`/attendance/${floor}/${room.roomNumber}`)}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Home className="h-5 w-5 text-primary" />
-                    <span className="font-semibold">{room.roomNumber}</span>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {room.bedType}
-                  </Badge>
-                </div>
+          {rooms.map((room) => {
+            // Calculate absent count: total students - present students
+            const totalStudents = room.studentCount || 0;
+            const presentStudents = room.presentCount || 0;
+            const absentCount = totalStudents - presentStudents;
+            // All present only if: there are students AND absent count is 0
+            const allPresent = totalStudents > 0 && absentCount === 0;
 
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>
-                      {room.studentCount || 0}/{room.capacity}
-                    </span>
+            return (
+              <Card
+                key={room.id}
+                className="cursor-pointer p-4 transition-smooth hover:border-primary"
+                onClick={() => navigate(`/attendance/${floor}/${room.roomNumber}`)}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Home className="h-5 w-5 text-primary" />
+                      <span className="font-semibold">{room.roomNumber}</span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {room.bedType}
+                    </Badge>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {room.studentCount || 0} students
-                  </span>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      <span>
+                        {presentStudents}/{totalStudents}
+                      </span>
+                    </div>
+                    {allPresent ? (
+                      <span className="text-xs font-medium text-green-600">
+                        All present
+                      </span>
+                    ) : absentCount > 0 ? (
+                      <span className="text-xs font-medium text-red-600">
+                        {absentCount} absent
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium text-muted-foreground">
+                        No students
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
 
         {/* Back Button */}

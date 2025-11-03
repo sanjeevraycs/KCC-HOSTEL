@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import { useAttendanceRecords } from '@/hooks/useAttendanceData';
 import { useAllStudents } from '@/hooks/useStudents';
+import { useRealtimeAttendance } from '@/hooks/useRealtimeAttendance';
 import { format } from 'date-fns';
 import { CalendarIcon, Search, User, Bed } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -22,9 +23,28 @@ export default function AttendanceHistory() {
     format(selectedDate, 'yyyy-MM-dd')
   );
 
+  // Enable real-time updates
+  useRealtimeAttendance();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 History Page - Students:', students?.length);
+    console.log('🔍 History Page - All Records:', records?.length);
+    console.log('🔍 History Page - Records detail:', records);
+    
+    if (records) {
+      const absentOnly = records.filter(r => r.status === 'absent');
+      console.log('🔍 History Page - Absent records:', absentOnly.length);
+      console.log('🔍 Absent records detail:', absentOnly);
+    }
+  }, [students, records]);
+
   const studentMap = new Map(students?.map(s => [s.id, s]) ?? []);
 
-  const filteredRecords = records?.filter(record => {
+  // Filter only ABSENT records
+  const absentRecords = records?.filter(r => r.status === 'absent') ?? [];
+
+  const filteredRecords = absentRecords.filter(record => {
     const student = studentMap.get(record.studentId);
     if (!student) return false;
 
@@ -34,6 +54,17 @@ export default function AttendanceHistory() {
       student.rollNumber.toLowerCase().includes(searchLower) ||
       student.roomNumber.includes(searchLower)
     );
+  });
+
+  const totalStudents = students?.length ?? 0;
+  const absentCount = absentRecords.length;
+  const presentCount = totalStudents - absentCount;
+
+  console.log('📊 Final calculations:', {
+    totalStudents,
+    absentCount,
+    presentCount,
+    filteredRecords: filteredRecords.length
   });
 
   return (
@@ -83,24 +114,24 @@ export default function AttendanceHistory() {
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-2xl font-bold">{students?.length ?? 0}</p>
+              <p className="text-2xl font-bold">{totalStudents}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Present</p>
               <p className="text-2xl font-bold text-accent">
-                {(students?.length ?? 0) - (records?.length ?? 0)}
+                {presentCount}
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Absent</p>
-              <p className="text-2xl font-bold text-warning">{records?.length ?? 0}</p>
+              <p className="text-2xl font-bold text-warning">{absentCount}</p>
             </div>
           </div>
         </Card>
 
         {/* Absent Students List */}
         <div className="space-y-3">
-          <h3 className="font-semibold">Absent Students ({filteredRecords?.length ?? 0})</h3>
+          <h3 className="font-semibold">Absent Students ({filteredRecords.length})</h3>
           
           {filteredRecords && filteredRecords.length > 0 ? (
             filteredRecords.map((record) => {

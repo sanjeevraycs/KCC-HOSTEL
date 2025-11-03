@@ -1,77 +1,26 @@
+// This file previously contained mock data for testing
+// All data is now fetched from Supabase database
+// Keeping this file for backwards compatibility but all functions return empty arrays
+
 import { Student, Room, Floor } from '@/types';
 
-// Generate mock students
+// No longer generating mock students - all data comes from Supabase
 export const generateMockStudents = (): Student[] => {
-  const students: Student[] = [];
-  let studentId = 1;
-
-  for (let floor = 1; floor <= 8; floor++) {
-    for (let room = 1; room <= 10; room++) {
-      const roomNumber = `${floor}0${room}`;
-      const capacity = room % 3 === 0 ? 3 : 2; // Mix of double and triple rooms
-
-      for (let bed = 1; bed <= capacity; bed++) {
-        students.push({
-          id: `STU${studentId.toString().padStart(3, '0')}`,
-          name: `Student ${studentId}`,
-          rollNumber: `2024${studentId.toString().padStart(4, '0')}`,
-          roomNumber,
-          floorNumber: floor,
-          bedNumber: bed,
-        });
-        studentId++;
-      }
-    }
-  }
-
-  return students;
+  return [];
 };
 
-export const mockStudents = generateMockStudents();
+export const mockStudents: Student[] = [];
 
-// Generate mock rooms
+// No longer generating mock rooms - all data comes from Supabase
 export const generateMockRooms = (): Room[] => {
-  const rooms: Room[] = [];
-
-  for (let floor = 1; floor <= 8; floor++) {
-    for (let room = 1; room <= 10; room++) {
-      const roomNumber = `${floor}0${room}`;
-      const capacity = room % 3 === 0 ? 3 : 2;
-      const bedType = capacity === 3 ? 'triple' : 'double';
-      
-      const roomStudents = mockStudents.filter(
-        s => s.roomNumber === roomNumber && s.floorNumber === floor
-      );
-
-      rooms.push({
-        roomNumber,
-        floorNumber: floor,
-        bedType,
-        capacity,
-        students: roomStudents,
-      });
-    }
-  }
-
-  return rooms;
+  return [];
 };
 
-export const mockRooms = generateMockRooms();
+export const mockRooms: Room[] = [];
 
-// Generate mock floors
+// No longer generating mock floors - all data comes from Supabase
 export const generateMockFloors = (): Floor[] => {
-  return Array.from({ length: 8 }, (_, i) => {
-    const floorNumber = i + 1;
-    const floorRooms = mockRooms.filter(r => r.floorNumber === floorNumber);
-    const totalStudents = floorRooms.reduce((sum, room) => sum + room.students.length, 0);
-
-    return {
-      floorNumber,
-      totalRooms: floorRooms.length,
-      totalStudents,
-      completedRooms: 0,
-    };
-  });
+  return [];
 };
 
-export const mockFloors = generateMockFloors();
+export const mockFloors: Floor[] = [];

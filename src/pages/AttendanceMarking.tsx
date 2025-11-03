@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useNavigate, useParams } from 'react-router-dom';
-import { User, Bed, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { User, Bed, ChevronLeft, ChevronRight, Check, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 import { useStudents } from '@/hooks/useStudents';
-import { useSubmitAttendance } from '@/hooks/useAttendanceData';
+import { useSubmitAttendance, useTodayAttendance } from '@/hooks/useAttendanceData';
+import { useRooms } from '@/hooks/useRooms';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function AttendanceMarking() {
@@ -19,7 +19,52 @@ export default function AttendanceMarking() {
   const [absentStudents, setAbsentStudents] = useState<Set<string>>(new Set());
 
   const { data: students = [], isLoading } = useStudents(floor, roomNumber);
+  const { data: todayAttendance = [] } = useTodayAttendance();
+  const { data: allRooms = [] } = useRooms(floor);
   const submitAttendanceMutation = useSubmitAttendance();
+
+  // Load previously marked absent students for this room when component mounts or data changes
+  useEffect(() => {
+    if (todayAttendance.length > 0 && students.length > 0) {
+      const absentStudentIds = todayAttendance
+        .filter(record => 
+          record.status === 'absent' && 
+          record.roomNumber === roomNumber &&
+          record.floorNumber === floor
+        )
+        .map(record => record.studentId);
+      
+      setAbsentStudents(new Set(absentStudentIds));
+      
+      // Load notes from the first absent record
+      const recordWithNotes = todayAttendance.find(r => 
+        r.roomNumber === roomNumber && 
+        r.floorNumber === floor && 
+        r.notes
+      );
+      if (recordWithNotes?.notes) {
+        setNotes(recordWithNotes.notes);
+      }
+    } else {
+      // Reset if no attendance data
+      setAbsentStudents(new Set());
+      setNotes('');
+    }
+  }, [todayAttendance, students, roomNumber, floor]);
+
+  // Find current room index and adjacent rooms
+  const { currentIndex, previousRoom, nextRoom } = useMemo(() => {
+    const sortedRooms = [...allRooms].sort((a, b) => 
+      a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true })
+    );
+    const index = sortedRooms.findIndex(r => r.roomNumber === roomNumber);
+    
+    return {
+      currentIndex: index,
+      previousRoom: index > 0 ? sortedRooms[index - 1] : null,
+      nextRoom: index < sortedRooms.length - 1 ? sortedRooms[index + 1] : null,
+    };
+  }, [allRooms, roomNumber]);
 
   const toggleStudentAttendance = (studentId: string) => {
     setAbsentStudents((prev) => {
@@ -35,6 +80,13 @@ export default function AttendanceMarking() {
 
   const handleSubmit = async () => {
     try {
+      console.log('Submitting attendance:', {
+        absentStudentIds: Array.from(absentStudents),
+        roomNumber,
+        floorNumber: floor,
+        notes
+      });
+
       await submitAttendanceMutation.mutateAsync({
         absentStudentIds: Array.from(absentStudents),
         roomNumber: roomNumber || '',
@@ -42,14 +94,28 @@ export default function AttendanceMarking() {
         notes: notes || undefined,
       });
 
-      // Reset and navigate
-      setAbsentStudents(new Set());
-      setNotes('');
-      navigate(`/floor/${floor}`);
+      console.log('Attendance submitted successfully');
+
+      // Show success toast and stay on the same page
+      toast({
+        title: "Attendance Submitted",
+        description: `Attendance for Room ${roomNumber} has been saved successfully.`,
+        variant: "default",
+      });
+
+      // No navigation - user stays on the same page
     } catch (error) {
-      // Error is handled by the mutation
       console.error('Failed to submit attendance:', error);
+      toast({
+        title: "Submission Failed",
+        description: "Failed to submit attendance. Please try again.",
+        variant: "destructive",
+      });
     }
+  };
+
+  const navigateToRoom = (targetRoom: string) => {
+    navigate(`/attendance/${floor}/${targetRoom}`);
   };
 
   if (isLoading) {
@@ -67,6 +133,12 @@ export default function AttendanceMarking() {
       <MainLayout title="Room Not Found">
         <div className="container px-4 py-6">
           <p>No students found for this room</p>
+          <Button 
+            onClick={() => navigate(`/floor/${floor}`)} 
+            className="mt-4"
+          >
+            Back to Floor
+          </Button>
         </div>
       </MainLayout>
     );
@@ -75,16 +147,49 @@ export default function AttendanceMarking() {
   return (
     <MainLayout title={`Room ${roomNumber}`}>
       <div className="container space-y-6 px-4 py-6">
-        {/* Room Info */}
+        {/* Back to Floor Button */}
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/floor/${floor}`)}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Floor {floor}
+        </Button>
+
+        {/* Room Info with Navigation */}
         <Card className="p-4">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Room {roomNumber}</h2>
-              <span className="text-sm text-muted-foreground">
-                Floor {floor}
-              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => previousRoom && navigateToRoom(previousRoom.roomNumber)}
+                disabled={!previousRoom}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {previousRoom ? `Room ${previousRoom.roomNumber}` : 'Previous'}
+              </Button>
+              
+              <div className="text-center">
+                <h2 className="text-lg font-semibold">Room {roomNumber}</h2>
+                <span className="text-sm text-muted-foreground">Floor {floor}</span>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => nextRoom && navigateToRoom(nextRoom.roomNumber)}
+                disabled={!nextRoom}
+                className="gap-1"
+              >
+                {nextRoom ? `Room ${nextRoom.roomNumber}` : 'Next'}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            
+            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
               <span>{students.length} students</span>
             </div>
           </div>

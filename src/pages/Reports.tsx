@@ -8,6 +8,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAttendanceRecords } from '@/hooks/useAttendanceData';
 import { useAllStudents } from '@/hooks/useStudents';
+import { useRealtimeAttendance } from '@/hooks/useRealtimeAttendance';
 import { generateAttendanceReport, generateDailySummary } from '@/utils/excelExport';
 import { format } from 'date-fns';
 import { CalendarIcon, Download, FileSpreadsheet } from 'lucide-react';
@@ -24,6 +25,9 @@ export default function Reports() {
     format(startDate, 'yyyy-MM-dd'),
     format(endDate, 'yyyy-MM-dd')
   );
+
+  // Enable real-time updates
+  useRealtimeAttendance();
 
   const handleGenerateReport = () => {
     if (!students || !records) {

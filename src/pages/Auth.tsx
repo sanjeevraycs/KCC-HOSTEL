@@ -108,10 +108,13 @@ export default function Auth() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-6">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-            <Building2 className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-primary">HostelTrack</h1>
+          <img
+            src="/logo.png"
+            alt="App Logo"
+            className="mx-auto mb-1 h-20 w-20 object-contain"
+          />
+
+          <h1 className="text-2xl font-bold text-primary">KCC HOSTEL</h1>
           <p className="text-sm text-muted-foreground">Attendance Management System</p>
         </div>
 
@@ -158,7 +161,7 @@ export default function Auth() {
                 <Input
                   id="signup-name"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder="Warden Name"
                   value={signupFullName}
                   onChange={(e) => setSignupFullName(e.target.value)}
                   required
@@ -204,6 +207,11 @@ export default function Auth() {
           </TabsContent>
         </Tabs>
       </Card>
+      <div className="absolute bottom-4 w-full text-center text-xs text-muted-foreground">
+       © 2025 Hasbulla. All rights reserved.
+      </div>
+
+
     </div>
   );
 }

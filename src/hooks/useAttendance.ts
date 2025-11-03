@@ -1,59 +1,45 @@
-import { create } from 'zustand';
-import { AttendanceRecord } from '@/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
 
-interface AttendanceState {
-  records: AttendanceRecord[];
-  currentDate: string;
-  absentStudents: Set<string>;
-  toggleStudentAttendance: (studentId: string) => void;
-  submitAttendance: (roomNumber: string, floorNumber: number) => void;
-  resetCurrentAttendance: () => void;
-  getTodayAttendance: () => AttendanceRecord[];
+export function useMarkAttendance() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      studentId: string;
+      status: 'present' | 'absent';
+      date: string;
+      notes?: string;
+      floorNumber?: number;
+      roomNumber?: string;
+    }) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: result, error } = await supabase
+        .from('attendance_records')
+        .insert({
+          student_id: data.studentId,
+          status: data.status,
+          date: data.date,
+          marked_by: user.id,
+          notes: data.notes,
+          floor_number: data.floorNumber,
+          room_number: data.roomNumber,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      // IMPORTANT: Refresh all attendance-related data
+      queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-records'] });
+    },
+  });
 }
-
-export const useAttendance = create<AttendanceState>((set, get) => ({
-  records: [],
-  currentDate: new Date().toISOString().split('T')[0],
-  absentStudents: new Set(),
-
-  toggleStudentAttendance: (studentId: string) => {
-    set((state) => {
-      const newAbsentStudents = new Set(state.absentStudents);
-      if (newAbsentStudents.has(studentId)) {
-        newAbsentStudents.delete(studentId);
-      } else {
-        newAbsentStudents.add(studentId);
-      }
-      return { absentStudents: newAbsentStudents };
-    });
-  },
-
-  submitAttendance: (roomNumber: string, floorNumber: number) => {
-    const { absentStudents, currentDate } = get();
-    const timestamp = new Date().toISOString();
-
-    const newRecords: AttendanceRecord[] = Array.from(absentStudents).map((studentId) => ({
-      id: `ATT-${Date.now()}-${studentId}`,
-      studentId,
-      date: currentDate,
-      status: 'absent',
-      markedAt: timestamp,
-      markedBy: 'warden1',
-      notes: `Floor ${floorNumber}, Room ${roomNumber}`,
-    }));
-
-    set((state) => ({
-      records: [...state.records, ...newRecords],
-      absentStudents: new Set(),
-    }));
-  },
-
-  resetCurrentAttendance: () => {
-    set({ absentStudents: new Set() });
-  },
-
-  getTodayAttendance: () => {
-    const { records, currentDate } = get();
-    return records.filter((record) => record.date === currentDate);
-  },
-}));
