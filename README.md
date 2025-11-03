@@ -4,7 +4,7 @@ A Progressive Web App (PWA) for hostel wardens to efficiently manage and track s
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/4fe2bfab-d715-473d-b803-f69b4ac236ff
+**URL**: URL: https://kcc.hostel.app 
 
 ## Features
 
