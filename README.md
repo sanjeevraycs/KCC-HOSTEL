@@ -154,15 +154,11 @@ Users can install the app on their devices:
 
 There are several ways of editing your application:
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/4fe2bfab-d715-473d-b803-f69b4ac236ff) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
+Changes made via Habulla will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Habulla.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -230,19 +226,6 @@ src/
 - Optimistic UI updates for instant feedback
 - Lazy loading and code splitting
 - Service worker caching for assets and API calls
-
-## Deployment
-
-Simply open [Lovable](https://lovable.dev/projects/4fe2bfab-d715-473d-b803-f69b4ac236ff) and click on Share -> Publish.
-
-## Custom Domain
-
-Yes, you can connect a custom domain!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
-
 ## Testing Checklist
 
 ### Authentication
@@ -276,7 +259,6 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/c
 ## Support
 
 For issues or questions:
-- [Lovable Documentation](https://docs.lovable.dev)
 - [Supabase Documentation](https://supabase.com/docs)
 
 ## License
